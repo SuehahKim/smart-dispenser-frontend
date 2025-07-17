@@ -9,10 +9,12 @@ import com.example.dispenser.ui.screens.*
 sealed class Screen(val route: String) {
     object Welcome     : Screen("welcome")
     object MemberLogin : Screen("member_login")
-    object GuestLogin  : Screen("guest_login")
     object SignUp      : Screen("sign_up")
     object MemberHome  : Screen("member_home")
     object GuestHome   : Screen("guest_home")
+    object Favorite   : Screen("favorite")
+    object History    : Screen("history")
+    object StockCheck  : Screen("stock_check")
 }
 
 @Composable
@@ -38,22 +40,17 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                         launchSingleTop = true
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = {
+                    navController.popBackStack()
+                },
+                onHome = {
+                    navController.popBackStack(Screen.Welcome.route,false)
+                }
+
             )
         }
 
-        // 3) 비회원 로그인 → 바로 GuestHome
-        composable(Screen.GuestLogin.route) {
-            GuestLoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screen.GuestHome.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                },
-                onBack = { navController.popBackStack() }
-            )
-        }
+
 
         // 4) 회원가입 → 회원 로그인 화면으로
         composable(Screen.SignUp.route) {
@@ -64,22 +61,51 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                         launchSingleTop = true
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
 
-        // 5) 회원 전용 홈 (임시)
+        // 5) 회원 전용 홈
         composable(Screen.MemberHome.route) {
-            MemberHomeScreen(onLogout = {
-                navController.popBackStack(Screen.Welcome.route, false)
-            })
+            MemberHomeScreen(
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) },
+                onFavorites = {navController.navigate(Screen.Favorite.route) },
+                onHistory    = { navController.navigate(Screen.History.route) },
+                onStockCheck = { navController.navigate(Screen.StockCheck.route) } // 예: 재고 확인
+            )
         }
 
-        // 6) 게스트 전용 홈 (임시)
+        // 6) 게스트 전용 홈
         composable(Screen.GuestHome.route) {
             GuestHomeScreen(onLogout = {
                 navController.popBackStack(Screen.Welcome.route, false)
             })
+        }
+
+        //즐겨찾기
+        composable(Screen.Favorite.route) {
+            FavoriteScreen(
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+            )
+        }
+
+        //사용이력
+        composable(Screen.History.route) {
+            HistoryScreen(
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+            )
+        }
+
+        //잔량확인
+        composable(Screen.StockCheck.route) {
+            StockCheckScreen(
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+            )
         }
     }
 }
