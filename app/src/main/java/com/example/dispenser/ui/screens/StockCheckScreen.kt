@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
  * @param onBack 뒤로가기 클릭 시 호출
  * @param onHome 홈 클릭 시 호출
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StockCheckScreen(
     onBack: () -> Unit,
