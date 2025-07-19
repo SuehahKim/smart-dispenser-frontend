@@ -1,7 +1,9 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.example.dispenser.ui.screens
 
+
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,23 +12,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavController
+import com.example.dispenser.ui.popups.StockAlertDialog
+import com.example.dispenser.ui.popups.RecipeConfirmDialog
+
+
+
 
 data class FavoriteItem(val id: Int, val name: String, val description: String)
 
@@ -35,7 +34,7 @@ fun FavoriteScreen(
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
-    // 더미 데이터 10개
+    // 더미 데이터
     val favorites = remember {
         listOf(
             FavoriteItem(1,  "떡볶이소스",      "고추장 • 고춧가루 • 설탕 • 간장 • 물엿"),
@@ -50,6 +49,9 @@ fun FavoriteScreen(
             FavoriteItem(10, "BBQ소스",        "토마토 소스 • 설탕 • 식초 • 스모크 향")
         )
     }
+
+    // 팝업 상태
+    var showRecipeDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -83,14 +85,18 @@ fun FavoriteScreen(
                                 width = 2.dp,
                                 color = MaterialTheme.colorScheme.primary,
                                 shape = RoundedCornerShape(12.dp)
-                            ),
+                            )
+                            .clickable {
+                                if (item.name == "떡볶이소스") {
+                                    showRecipeDialog = true
+                                }
+                            },
                         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(20.dp)
+                            modifier = Modifier.padding(20.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Star,
@@ -105,7 +111,6 @@ fun FavoriteScreen(
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
-
                                 )
                                 Spacer(Modifier.height(8.dp))
                                 Text(
@@ -120,6 +125,22 @@ fun FavoriteScreen(
                     }
                 }
             }
+
+            // 팝업 호출
+            RecipeConfirmDialog(
+                showDialog = showRecipeDialog,
+                onConfirm = {
+                    showRecipeDialog = false
+                    // 예 버튼 로직
+                },
+                onDismissAndBack = {
+                    showRecipeDialog = false
+                },
+                onRetry = {
+                    // 다시듣기 로직 (팝업을 유지하고 필요한 작업만 수행)
+                    // 예: 텍스트 음성으로 다시 읽기
+                }
+            )
         }
     )
 }
