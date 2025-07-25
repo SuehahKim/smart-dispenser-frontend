@@ -15,6 +15,7 @@ sealed class Screen(val route: String) {
     object Favorite   : Screen("favorite")
     object History    : Screen("history")
     object StockCheck  : Screen("stock_check")
+    object Manufacturing : Screen("manufacturing")
 }
 
 @Composable
@@ -87,6 +88,7 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         //즐겨찾기
         composable(Screen.Favorite.route) {
             FavoriteScreen(
+                navController = navController,
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
@@ -107,5 +109,13 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
+        //제조중
+        composable(Screen.Manufacturing.route) {
+            ManufacturingScreen(
+                onBack = { navController.popBackStack() },
+                onHome = { navController.navigate(Screen.Favorite.route) }
+            )
+        }
+
     }
 }

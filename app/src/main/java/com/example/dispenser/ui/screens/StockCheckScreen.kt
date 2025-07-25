@@ -3,6 +3,7 @@
 
 package com.example.dispenser.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,18 +64,24 @@ fun StockCheckScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // 상단 타이틀
+                // 상단 타이틀 (크기 키우고 위치 조정)
                 Text(
                     text = "잔량",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(vertical = 12.dp)
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 28.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 0.5.dp)
                 )
 
-                // 잔량 리스트 (네모 박스 높이 축소 + 텍스트 간격 대칭 조정)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(0.85f)
-                        .height(280.dp)
+                        .height(420.dp)
+                        .background(
+                            color = Color(0xFFFAF3EB),
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .border(
                             width = 2.dp,
                             color = Color(0xFFE0E0E0),
