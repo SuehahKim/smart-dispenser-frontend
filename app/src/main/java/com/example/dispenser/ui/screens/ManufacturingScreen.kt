@@ -3,7 +3,6 @@
 package com.example.dispenser.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,24 +14,30 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-
+import com.example.dispenser.navigation.Screen
+import androidx.navigation.NavController
 
 @Composable
 fun ManufacturingScreen(
+    navController: NavController,
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
     var progress by remember { mutableStateOf(0f) }
     var isPaused by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    var isCompleted by remember { mutableStateOf(false) }
 
-    //진행바 자동 증가 (5초 동안 100%)
+    // 진행바
     LaunchedEffect(Unit) {
         while (progress < 1f) {
             if (!isPaused) {
-                progress += 0.02f       // 5초 동안 100% → 0.02씩 증가 (약 50번)
+                progress += 0.02f
+                if (progress >= 1f) {
+                    progress = 1f
+                    isCompleted = true
+                }
             }
-            delay(100)                  // 0.1초마다 업데이트
+            delay(100)
         }
     }
 
@@ -41,16 +46,16 @@ fun ManufacturingScreen(
             TopAppBar(
                 title = {},
                 actions = {
-                    IconButton(onClick = onHome) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "홈"
-                        )
+                    if (isCompleted) {
+                        IconButton(onClick = onHome) {
+                            Icon(imageVector = Icons.Default.Home, contentDescription = "홈")
+                        }
                     }
                 }
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -60,50 +65,79 @@ fun ManufacturingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Spacer(modifier = Modifier.height(80.dp))
-            // 제목
+
+            // ✅ 제목
             Text(
-                text = "제조중",
+                text = if (isCompleted) "제조완료" else "제조중",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 40.dp)
             )
-            Spacer(modifier = Modifier.height(60.dp))
 
+            Spacer(modifier = Modifier.height(60.dp))
 
             // ✅ 진행 바
             LinearProgressIndicator(
                 progress = progress.coerceIn(0f, 1f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp),
+                modifier = Modifier.fillMaxWidth().height(12.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = Color.LightGray
             )
 
             Spacer(modifier = Modifier.height(80.dp))
 
-            // ✅ 일시정지 / 재생 버튼
-            Button(
-                onClick = { isPaused = !isPaused },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor =  MaterialTheme.colorScheme.primary)
-            ) {
-                Text(if (isPaused) "재생" else "일시정지")
-            }
+            if (isCompleted) {
+                Button(
+                    onClick = {
+                        navController.navigate(Screen.StockCheck.route + "?origin=manufacturing") {
+                            popUpTo(Screen.MemberHome.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("잔량확인", color = Color.White)
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            // ✅ 종료 버튼
-            Button(
-                onClick = onBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0E0E0))
-            ) {
-                Text("종료",color = Color.Black)
+                Button(
+                    onClick = { /* 즐겨찾기 추가 로직 */ },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("즐겨찾기에 추가", color = Color.White)
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Button(
+                    onClick = { navController.navigate(Screen.MemberHome.route) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("다시 만들기", color = Color.White)
+                }
+            } else {
+                // 제조중 상태 버튼들
+                Button(
+                    onClick = { isPaused = !isPaused },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(if (isPaused) "재생" else "일시정지")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0E0E0))
+                ) {
+                    Text("종료", color = Color.Black)
+                }
             }
         }
     }

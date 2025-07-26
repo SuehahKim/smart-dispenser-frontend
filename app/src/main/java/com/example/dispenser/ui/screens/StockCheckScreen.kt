@@ -26,6 +26,7 @@ data class StockItem(val id: Int, val name: String, val percentage: String)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StockCheckScreen(
+    fromManufacturing: Boolean = false,
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {

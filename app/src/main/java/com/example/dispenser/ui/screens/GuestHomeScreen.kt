@@ -32,7 +32,8 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun GuestHomeScreen(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onStockCheck: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -112,7 +113,7 @@ fun GuestHomeScreen(
 
 
                 Button(
-                    onClick = { /* 잔량 확인 */ },
+                    onClick = onStockCheck,     // ✅ 콜백 호출
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(buttonHeight),

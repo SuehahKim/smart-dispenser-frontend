@@ -72,17 +72,26 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             MemberHomeScreen(
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) },
-                onFavorites = {navController.navigate(Screen.Favorite.route) },
-                onHistory    = { navController.navigate(Screen.History.route) },
-                onStockCheck = { navController.navigate(Screen.StockCheck.route) } // 예: 재고 확인
+                onFavorites = { navController.navigate(Screen.Favorite.route) },
+                onHistory = { navController.navigate(Screen.History.route) },
+                onStockCheck = {
+                    navController.navigate(Screen.StockCheck.route + "?origin=default")
+                }
+
             )
         }
 
+
         // 6) 게스트 전용 홈
         composable(Screen.GuestHome.route) {
-            GuestHomeScreen(onLogout = {
-                navController.popBackStack(Screen.Welcome.route, false)
-            })
+            GuestHomeScreen(
+                onLogout = {
+                    navController.popBackStack(Screen.Welcome.route, false)
+                },
+                onStockCheck = {
+                    navController.navigate(Screen.StockCheck.route + "?origin=default")
+                }
+            )
         }
 
         //즐겨찾기
@@ -90,7 +99,12 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             FavoriteScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
-                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+                onHome = {
+                    navController.navigate(Screen.MemberHome.route) {
+                        popUpTo(0)   // ✅ 스택 초기화
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
@@ -98,22 +112,55 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         composable(Screen.History.route) {
             HistoryScreen(
                 onBack = { navController.popBackStack() },
-                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+                onHome = {
+                    navController.navigate(Screen.MemberHome.route) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
-        //잔량확인
-        composable(Screen.StockCheck.route) {
+        // 잔량확인
+        // 잔량확인 (origin 값에 따라 뒤로가기 동작 변경)
+        composable(Screen.StockCheck.route + "?origin={origin}") { backStackEntry ->
+            val origin = backStackEntry.arguments?.getString("origin") ?: "default"
+
             StockCheckScreen(
-                onBack = { navController.popBackStack() },
-                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+                onBack = {
+                    if (origin == "manufacturing") {
+                        // ✅ 제조완료 → 잔량확인 → 뒤로 → 제조완료 화면 복귀
+                        if (!navController.popBackStack(Screen.Manufacturing.route, false)) {
+                            navController.navigate(Screen.Manufacturing.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                    } else {
+                        // ✅ 기본 → 잔량확인 → 뒤로 → 이전 화면 복귀
+                        navController.popBackStack()
+                    }
+                },
+                onHome = {
+                    navController.navigate(Screen.MemberHome.route) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                }
             )
         }
+
+
+
         //제조중
         composable(Screen.Manufacturing.route) {
             ManufacturingScreen(
+                navController = navController,
                 onBack = { navController.popBackStack() },
-                onHome = { navController.navigate(Screen.Favorite.route) }
+                onHome = {
+                    navController.navigate(Screen.MemberHome.route) {
+                        popUpTo(0)
+                    }
+                }
             )
         }
 
