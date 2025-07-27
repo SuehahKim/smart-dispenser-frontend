@@ -1,7 +1,6 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.example.dispenser.ui.screens
 
-import android.service.autofill.FillEventHistory
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,21 +12,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * 회원 전용 홈 화면
+ *
+ * @param onBack 뒤로가기 (Welcome으로)
+ * @param onHome 홈 아이콘 (Welcome으로)
+ * @param onConnectDevice 기기 연결하기 버튼 클릭
+ * @param onFavorites 즐겨찾기 버튼 클릭
+ * @param onHistory 사용이력 버튼 클릭
+ * @param onStockCheck 잔량확인 버튼 클릭
+ */
 @Composable
 fun MemberHomeScreen(
     onBack: () -> Unit,
     onHome: () -> Unit,
+    onConnectDevice: () -> Unit,
     onFavorites: () -> Unit,
     onHistory: () -> Unit,
-    onStockCheck: () -> Unit) {
+    onStockCheck: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* 빈 블록이라도 반드시 필요합니다 */ },
+                title = { /* 제목이 필요 없으면 비워두세요 */ },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
@@ -55,9 +63,9 @@ fun MemberHomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
-                            5.dp,
-                            Color(0xFFB0C7D9),
-                            RoundedCornerShape(8.dp)
+                            width = 5.dp,
+                            color = Color(0xFFB0C7D9),
+                            shape = RoundedCornerShape(8.dp)
                         )
                         .padding(vertical = 24.dp),
                     contentAlignment = Alignment.Center
@@ -75,7 +83,7 @@ fun MemberHomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // 직접 검색 필드에도 5dp 테두리 추가
+                // 직접 검색 필드
                 var query by remember { mutableStateOf("") }
                 OutlinedTextField(
                     value = query,
@@ -85,28 +93,45 @@ fun MemberHomeScreen(
                         .fillMaxWidth()
                         .height(56.dp)
                         .border(
-                            5.dp,
-                            Color(0xFFB0C7D9),
-                            RoundedCornerShape(8.dp)
+                            width = 5.dp,
+                            color = Color(0xFFB0C7D9),
+                            shape = RoundedCornerShape(8.dp)
                         )
                 )
 
                 Spacer(modifier = Modifier.height(50.dp))
 
-                // 버튼들의 색상을 primary 로 복원
                 val buttonShape = RoundedCornerShape(8.dp)
                 val buttonHeight = 56.dp
+                val buttonColors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
 
+                // 기기 연결하기 버튼
+                Button(
+                    onClick = onConnectDevice,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(buttonHeight),
+                    shape = buttonShape,
+                    colors = buttonColors
+                ) {
+                    Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("기기 연결하기")
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 즐겨찾기 버튼
                 Button(
                     onClick = onFavorites,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(buttonHeight),
                     shape = buttonShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    colors = buttonColors
                 ) {
                     Icon(Icons.Default.Star, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -115,16 +140,14 @@ fun MemberHomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // 사용이력 버튼
                 Button(
                     onClick = onHistory,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(buttonHeight),
                     shape = buttonShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    colors = buttonColors
                 ) {
                     Icon(Icons.Default.History, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -133,16 +156,14 @@ fun MemberHomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // 잔량확인 버튼
                 Button(
                     onClick = onStockCheck,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(buttonHeight),
                     shape = buttonShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    colors = buttonColors
                 ) {
                     Text("잔량확인")
                 }

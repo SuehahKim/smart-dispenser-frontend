@@ -1,6 +1,7 @@
 package com.example.dispenser.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -16,6 +17,7 @@ sealed class Screen(val route: String) {
     object History    : Screen("history")
     object StockCheck  : Screen("stock_check")
     object Manufacturing : Screen("manufacturing")
+    object DeviceConnect : Screen("device_connect")
 }
 
 @Composable
@@ -72,39 +74,37 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             MemberHomeScreen(
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) },
-                onFavorites = { navController.navigate(Screen.Favorite.route) },
-                onHistory = { navController.navigate(Screen.History.route) },
-                onStockCheck = {
-                    navController.navigate(Screen.StockCheck.route + "?origin=default")
-                }
-
+                onFavorites = {navController.navigate(Screen.Favorite.route) },
+                onHistory    = { navController.navigate(Screen.History.route) },
+                onStockCheck = { navController.navigate(Screen.StockCheck.route) }, // 예: 재고 확인
+                onConnectDevice = { navController.navigate(Screen.DeviceConnect.route) }
             )
         }
-
 
         // 6) 게스트 전용 홈
         composable(Screen.GuestHome.route) {
             GuestHomeScreen(
-                onLogout = {
-                    navController.popBackStack(Screen.Welcome.route, false)
+                onLogout = { navController.popBackStack(Screen.Welcome.route, false) },
+                onStockCheck = { navController.navigate(Screen.StockCheck.route)}
+            )
+        }
+
+        //QR스크린
+        composable(Screen.DeviceConnect.route) {
+            QRScanScreen(
+                onScanSuccess = { /* 스캔된 결과를 인자로 받아 제조중 화면으로 */
+                    navController.navigate(Screen.Manufacturing.route)
                 },
-                onStockCheck = {
-                    navController.navigate(Screen.StockCheck.route + "?origin=default")
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
         //즐겨찾기
         composable(Screen.Favorite.route) {
             FavoriteScreen(
-                navController = navController,
+
                 onBack = { navController.popBackStack() },
-                onHome = {
-                    navController.navigate(Screen.MemberHome.route) {
-                        popUpTo(0)   // ✅ 스택 초기화
-                        launchSingleTop = true
-                    }
-                }
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
 
@@ -112,55 +112,23 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         composable(Screen.History.route) {
             HistoryScreen(
                 onBack = { navController.popBackStack() },
-                onHome = {
-                    navController.navigate(Screen.MemberHome.route) {
-                        popUpTo(0)
-                        launchSingleTop = true
-                    }
-                }
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
 
-        // 잔량확인
-        // 잔량확인 (origin 값에 따라 뒤로가기 동작 변경)
-        composable(Screen.StockCheck.route + "?origin={origin}") { backStackEntry ->
-            val origin = backStackEntry.arguments?.getString("origin") ?: "default"
-
+        //잔량확인
+        composable(Screen.StockCheck.route) {
             StockCheckScreen(
-                onBack = {
-                    if (origin == "manufacturing") {
-                        // ✅ 제조완료 → 잔량확인 → 뒤로 → 제조완료 화면 복귀
-                        if (!navController.popBackStack(Screen.Manufacturing.route, false)) {
-                            navController.navigate(Screen.Manufacturing.route) {
-                                launchSingleTop = true
-                            }
-                        }
-                    } else {
-                        // ✅ 기본 → 잔량확인 → 뒤로 → 이전 화면 복귀
-                        navController.popBackStack()
-                    }
-                },
-                onHome = {
-                    navController.navigate(Screen.MemberHome.route) {
-                        popUpTo(0)
-                        launchSingleTop = true
-                    }
-                }
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
-
-
-
         //제조중
         composable(Screen.Manufacturing.route) {
             ManufacturingScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
-                onHome = {
-                    navController.navigate(Screen.MemberHome.route) {
-                        popUpTo(0)
-                    }
-                }
+                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
 

@@ -13,12 +13,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 @Composable
 fun RecipeConfirmDialog(
     showDialog: Boolean,
-    onConfirm: () -> Unit,          // ✅ 예 버튼: 제조중 화면으로 이동
-    onDismissAndBack: () -> Unit,   // ✅ 아니오 버튼: 팝업 닫기
-    onRetry: () -> Unit             // ✅ 다시듣기: 팝업 유지 (닫히지 않음)
+    onConfirm: () -> Unit,
+    onDismissAndBack: () -> Unit,
+    onRetry: () -> Unit  // ✅ 새로 추가
 ) {
     if (showDialog) {
         AlertDialog(
@@ -69,10 +70,11 @@ fun RecipeConfirmDialog(
                         .height(48.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // ✅ 예 버튼 → 제조중 화면으로 이동
                     Button(
                         onClick = onConfirm,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = Color.White
@@ -82,10 +84,11 @@ fun RecipeConfirmDialog(
                         Text("예", fontSize = 16.sp)
                     }
 
-                    // ✅ 아니오 버튼 → 팝업 닫기
                     Button(
                         onClick = onDismissAndBack,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFE0E0E0),
                             contentColor = Color.Black
@@ -96,12 +99,12 @@ fun RecipeConfirmDialog(
                     }
                 }
             },
-
-            // ✅ 다시듣기 → 팝업 유지
             dismissButton = {
                 Button(
-                    onClick = onRetry,
-                    modifier = Modifier.height(48.dp).fillMaxWidth(),
+                    onClick = onRetry,  // ✅ 팝업 닫지 않음
+                    modifier = Modifier
+                        .height(48.dp)
+                        .fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE0E0E0),
                         contentColor = Color.Black
