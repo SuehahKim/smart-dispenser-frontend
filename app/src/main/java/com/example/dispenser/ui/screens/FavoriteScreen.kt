@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import com.example.dispenser.ui.popups.StockAlertDialog
 import com.example.dispenser.ui.popups.RecipeConfirmDialog
-import com.example.dispenser.navigation.Screen
 
 
 
@@ -32,7 +31,6 @@ data class FavoriteItem(val id: Int, val name: String, val description: String)
 
 @Composable
 fun FavoriteScreen(
-    navController: NavController,
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
@@ -133,16 +131,16 @@ fun FavoriteScreen(
                 showDialog = showRecipeDialog,
                 onConfirm = {
                     showRecipeDialog = false
-                    navController.navigate(Screen.Manufacturing.route)  // ✅ 제조중 화면 이동
+                    // 예 버튼 로직
                 },
                 onDismissAndBack = {
                     showRecipeDialog = false
                 },
                 onRetry = {
-                    // ✅ 팝업 닫지 않고 다시듣기 동작만 수행
+                    // 다시듣기 로직 (팝업을 유지하고 필요한 작업만 수행)
+                    // 예: 텍스트 음성으로 다시 읽기
                 }
             )
-
         }
     )
 }
