@@ -21,23 +21,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.dispenser.ui.popups.RecipeConfirmDialog
+import androidx.navigation.NavController
+import com.example.dispenser.navigation.Screen   // ✅ 네비게이션 Screen import
+import com.example.dispenser.ui.popups.RecipeConfirmDialog  // ✅ 팝업 import
 
 // 기록 모델
 data class HistoryItem(val id: Int, val name: String, val timestamp: String)
 
-/**
- * 사용 이력 화면
- */
 @Composable
 fun HistoryScreen(
+    navController: NavController,
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
-    // ✅ 레시피 팝업 상태
+    // ✅ 팝업 상태
     var showRecipeDialog by remember { mutableStateOf(false) }
 
-    // 더미 기록
+    // ✅ 더미 이력 데이터
     val history = remember {
         listOf(
             HistoryItem(1, "떡볶이소스", "2025-07-17 11:23 사용"),
@@ -93,6 +93,7 @@ fun HistoryScreen(
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .clickable {
+                                    // ✅ 떡볶이소스 클릭 시 팝업 표시
                                     if (item.name == "떡볶이소스") {
                                         showRecipeDialog = true
                                     }
@@ -133,12 +134,18 @@ fun HistoryScreen(
                 }
             }
 
-            // ✅ 레시피 확인 팝업
+            // ✅ 레시피 확인 팝업 → 예 버튼 시 제조중 화면으로 이동
             RecipeConfirmDialog(
                 showDialog = showRecipeDialog,
-                onConfirm = { showRecipeDialog = false },
+                onConfirm = {
+                    showRecipeDialog = false
+                    navController.navigate(Screen.Manufacturing.route) {  // ✅ 제조중 화면 이동
+                        popUpTo(Screen.MemberHome.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 onDismissAndBack = { showRecipeDialog = false },
-                onRetry = { /* 다시듣기 기능 필요 시 구현 */ }
+                onRetry = { /* 다시듣기 로직 필요 시 구현 */ }
             )
         }
     )

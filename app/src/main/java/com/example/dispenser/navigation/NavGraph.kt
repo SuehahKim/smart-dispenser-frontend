@@ -111,6 +111,7 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         //사용이력
         composable(Screen.History.route) {
             HistoryScreen(
+                navController = navController,
                 onBack = { navController.popBackStack() },
                 onHome = {
                     navController.navigate(Screen.MemberHome.route) {
