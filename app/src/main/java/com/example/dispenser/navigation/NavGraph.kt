@@ -86,7 +86,8 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         composable(Screen.GuestHome.route) {
             GuestHomeScreen(
                 onLogout = { navController.popBackStack(Screen.Welcome.route, false) },
-                onStockCheck = { navController.navigate(Screen.StockCheck.route)}
+                onStockCheck = { navController.navigate(Screen.StockCheck.route)},
+                onConnectDevice = { navController.navigate(Screen.DeviceConnect.route) }
             )
         }
 

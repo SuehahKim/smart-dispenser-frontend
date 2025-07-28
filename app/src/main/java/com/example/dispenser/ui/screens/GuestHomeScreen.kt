@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,7 +34,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun GuestHomeScreen(
     onLogout: () -> Unit,
-    onStockCheck: () -> Unit
+    onStockCheck: () -> Unit,
+    onConnectDevice: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -111,6 +113,21 @@ fun GuestHomeScreen(
 
 
 
+                // 기기 연결하기 버튼
+                Button(
+                    onClick = onConnectDevice,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(buttonHeight),
+                    shape = buttonShape,
+                    colors = ButtonDefaults.buttonColors()
+                ) {
+                    Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("기기 연결하기")
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = onStockCheck,     // ✅ 콜백 호출
