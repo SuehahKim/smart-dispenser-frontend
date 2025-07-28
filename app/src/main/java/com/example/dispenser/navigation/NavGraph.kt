@@ -18,6 +18,7 @@ sealed class Screen(val route: String) {
     object StockCheck  : Screen("stock_check")
     object Manufacturing : Screen("manufacturing")
     object DeviceConnect : Screen("device_connect")
+    object ManufacturingComplete : Screen("manufacturing_complete")
 }
 
 @Composable
@@ -102,7 +103,7 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         //즐겨찾기
         composable(Screen.Favorite.route) {
             FavoriteScreen(
-
+                navController = navController,
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
@@ -130,6 +131,19 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                 navController = navController,
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+            )
+        }
+        // 제조완료
+        composable(Screen.ManufacturingComplete.route) {
+            ManufacturingCompleteScreen(
+                navController = navController,
+                onBack = { navController.popBackStack() },
+                onHome = {
+                    navController.navigate(Screen.MemberHome.route) {
+                        popUpTo(0)    // 백스택 초기화
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
