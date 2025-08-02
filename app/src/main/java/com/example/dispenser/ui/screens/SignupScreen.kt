@@ -33,6 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 import androidx.compose.foundation.layout.offset
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.dispenser.viewmodel.SignUpViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
+
+
 
 /**
  * 회원가입 화면
@@ -47,6 +54,18 @@ fun SignUpScreen(
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
+    val viewModel: SignUpViewModel = viewModel()
+
+    val context = LocalContext.current
+    val message = viewModel.signUpMessage.value
+
+    if (message != null) {
+        LaunchedEffect(message) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.signUpMessage.value = null // 메시지 초기화 (중복 방지)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,7 +136,14 @@ fun SignUpScreen(
                     )
 
                     Button(
-                        onClick = onSignUpSuccess,
+                        onClick = {
+                            viewModel.signUp(
+                                email = email,
+                                password = password,
+                                passwordConfirm = confirmPassword,
+                                onSuccess = onSignUpSuccess // ✅ 회원가입 성공 시 로그인 화면으로 이동
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(70.dp)

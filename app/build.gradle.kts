@@ -78,4 +78,18 @@ dependencies {
 
     implementation ("androidx.appcompat:appcompat:1.6.1")
 
+    // 📌 dependencies 블록 안에 추가
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // 코루틴 + 뷰모델 사용 중이면:
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.json:json:20231013") // JSONObject 쓰려면 필요
+
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+
 }
