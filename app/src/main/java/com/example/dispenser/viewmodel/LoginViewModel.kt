@@ -27,18 +27,15 @@ class LoginViewModel(
 
                 if (response.isSuccessful) {
                     val body = response.body()
-                    if (body?.success == true && body.token != null) {
+
                         _loginSuccess.value = true
-                        loginMessage.value = "로그인 성공: ${body.message}"
-                        Log.d("로그인", "성공: ${body.message}")
+                        loginMessage.value = "로그인 성공"
+                        Log.d("로그인 토큰", "${body?.accessToken ?: ""}")
 
                         // ✅ JWT 토큰 저장
-                        tokenManager.saveToken(body.token)
+                        tokenManager.saveToken(body?.accessToken ?: "")
+                        tokenManager.saveToken(body?.refreshToken ?: "")
 
-                    } else {
-                        loginMessage.value = body?.message ?: "로그인 실패"
-                        Log.e("로그인", "실패: ${body?.message}")
-                    }
                 } else {
                     loginMessage.value = "서버 오류: ${response.code()}"
                     Log.e("로그인", "서버 오류: ${response.code()}")

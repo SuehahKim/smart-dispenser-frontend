@@ -20,16 +20,11 @@ class SignUpViewModel : ViewModel() {
                 val response = RetrofitClient.authService.signUp(request)
 
                 if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body?.success == true) {
-                        Log.d("회원가입", "성공: ${body.message}")
-                        onSuccess()
-                        // 성공 시 메시지를 띄우고 싶으면 이 줄 추가:
-                        // signUpMessage.value = body.message ?: "회원가입 성공"
-                    } else {
-                        Log.e("회원가입", "실패: ${body?.message}")
-                        signUpMessage.value = body?.message ?: "회원가입 실패"
-                    }
+
+                    Log.d("회원가입", "성공")
+                    onSuccess()
+                    // 성공 시 메시지를 띄우고 싶으면 이 줄 추가:
+                    // signUpMessage.value = body.message ?: "회원가입 성공"
                 } else {
                     val errorJson = response.errorBody()?.string()
                     val errorMessage = extractErrorMessage(errorJson)
