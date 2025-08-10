@@ -20,12 +20,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dispenser.viewmodel.LoginViewModel
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import com.example.dispenser.data.local.TokenManager
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+
 
 
 /**
@@ -43,7 +46,7 @@ fun MemberLoginScreen(
 ) {
     val context = LocalContext.current
     val tokenManager: TokenManager = remember { TokenManager(context) }
-    val viewModel = remember { LoginViewModel(tokenManager) }
+    val viewModel: LoginViewModel = viewModel()
 
     val loginSuccess = viewModel.loginSuccess.value
     val message = viewModel.loginMessage.value

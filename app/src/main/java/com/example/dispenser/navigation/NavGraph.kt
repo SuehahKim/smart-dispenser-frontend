@@ -1,11 +1,15 @@
 package com.example.dispenser.navigation
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import com.example.dispenser.ui.screens.*
+import com.example.dispenser.data.local.InstallIdManager
+import com.example.dispenser.viewmodel.LoginViewModel
 
 sealed class Screen(val route: String) {
     object Welcome     : Screen("welcome")
@@ -13,8 +17,8 @@ sealed class Screen(val route: String) {
     object SignUp      : Screen("sign_up")
     object MemberHome  : Screen("member_home")
     object GuestHome   : Screen("guest_home")
-    object Favorite   : Screen("favorite")
-    object History    : Screen("history")
+    object Favorite    : Screen("favorite")
+    object History     : Screen("history")
     object StockCheck  : Screen("stock_check")
     object Manufacturing : Screen("manufacturing")
     object DeviceConnect : Screen("device_connect")
@@ -26,13 +30,35 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
     val navController = rememberNavController()
 
     NavHost(navController, startDestination) {
+
         // 1) 첫 화면
         composable(Screen.Welcome.route) {
+            // AndroidViewModel 사용 – 팩토리 없이 바로 꺼냄
+            val loginViewModel: LoginViewModel = viewModel()
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val loginSuccess by loginViewModel.loginSuccess
+
             WelcomeScreen(
                 onMemberLogin = { navController.navigate(Screen.MemberLogin.route) },
-                onGuestLogin  = { navController.navigate(Screen.GuestHome.route) },
+                onGuestLogin  = {
+                    scope.launch {
+                        val uuid = InstallIdManager(context).getOrCreate()
+                        loginViewModel.guestLogin(uuid)
+                    }
+                },
                 onSignUp      = { navController.navigate(Screen.SignUp.route) }
             )
+
+            if (loginSuccess) {
+                LaunchedEffect(Unit) {
+                    loginViewModel.resetLoginSuccess()
+                    navController.navigate(Screen.GuestHome.route) {
+                        popUpTo(Screen.Welcome.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
         }
 
         // 2) 회원 로그인
@@ -44,19 +70,12 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                         launchSingleTop = true
                     }
                 },
-                onBack = {
-                    navController.popBackStack()
-                },
-                onHome = {
-                    navController.popBackStack(Screen.Welcome.route,false)
-                }
-
+                onBack = { navController.popBackStack() },
+                onHome = { navController.popBackStack(Screen.Welcome.route,false) }
             )
         }
 
-
-
-        // 4) 회원가입 → 회원 로그인 화면으로
+        // 3) 회원가입
         composable(Screen.SignUp.route) {
             SignUpScreen(
                 onSignUpSuccess = {
@@ -70,38 +89,36 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-        // 5) 회원 전용 홈
+        // 4) 회원 홈
         composable(Screen.MemberHome.route) {
             MemberHomeScreen(
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) },
-                onFavorites = {navController.navigate(Screen.Favorite.route) },
+                onFavorites = { navController.navigate(Screen.Favorite.route) },
                 onHistory    = { navController.navigate(Screen.History.route) },
-                onStockCheck = { navController.navigate(Screen.StockCheck.route) }, // 예: 재고 확인
+                onStockCheck = { navController.navigate(Screen.StockCheck.route) },
                 onConnectDevice = { navController.navigate(Screen.DeviceConnect.route) }
             )
         }
 
-        // 6) 게스트 전용 홈
+        // 5) 게스트 홈
         composable(Screen.GuestHome.route) {
             GuestHomeScreen(
                 onLogout = { navController.popBackStack(Screen.Welcome.route, false) },
-                onStockCheck = { navController.navigate(Screen.StockCheck.route)},
+                onStockCheck = { navController.navigate(Screen.StockCheck.route) },
                 onConnectDevice = { navController.navigate(Screen.DeviceConnect.route) }
             )
         }
 
-        //QR스크린
+        // 6) QR
         composable(Screen.DeviceConnect.route) {
             QRScanScreen(
-                onScanSuccess = { /* 스캔된 결과를 인자로 받아 제조중 화면으로 */
-                    navController.navigate(Screen.Manufacturing.route)
-                },
+                onScanSuccess = { navController.navigate(Screen.Manufacturing.route) },
                 onBack = { navController.popBackStack() }
             )
         }
 
-        //즐겨찾기
+        // 7) 즐겨찾기
         composable(Screen.Favorite.route) {
             FavoriteScreen(
                 navController = navController,
@@ -110,7 +127,7 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-        //사용이력
+        // 8) 이력
         composable(Screen.History.route) {
             HistoryScreen(
                 navController = navController,
@@ -119,14 +136,15 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-        //잔량확인
+        // 9) 잔량
         composable(Screen.StockCheck.route) {
             StockCheckScreen(
                 onBack = { navController.popBackStack() },
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
-        //제조중
+
+        // 10) 제조중
         composable(Screen.Manufacturing.route) {
             ManufacturingScreen(
                 navController = navController,
@@ -134,19 +152,19 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
                 onHome = { navController.popBackStack(Screen.Welcome.route, false) }
             )
         }
-        // 제조완료
+
+        // 11) 제조 완료
         composable(Screen.ManufacturingComplete.route) {
             ManufacturingCompleteScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
                 onHome = {
                     navController.navigate(Screen.MemberHome.route) {
-                        popUpTo(0)    // 백스택 초기화
+                        popUpTo(0)
                         launchSingleTop = true
                     }
                 }
             )
         }
-
     }
 }
