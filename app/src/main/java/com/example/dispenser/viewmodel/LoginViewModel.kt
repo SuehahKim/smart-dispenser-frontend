@@ -33,6 +33,9 @@ class LoginViewModel(
                     tokenManager.saveTokens(body.accessToken, body.refreshToken)
                     com.example.dispenser.data.local.TokenHolder.accessToken = body.accessToken
 
+                    // ✅ 토큰 값 확인 로그
+                    Log.d("Login", "ACCESS TOKEN = ${body.accessToken}")
+                    Log.d("Login", "REFRESH TOKEN = ${body.refreshToken}")
 
                     _loginSuccess.value = true
                     loginMessage.value = "로그인 성공"
