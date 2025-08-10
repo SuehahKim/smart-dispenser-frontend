@@ -7,32 +7,30 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-// Context 확장 프로퍼티로 DataStore 정의
 private val Context.dataStore by preferencesDataStore(name = "auth_prefs")
 
-// JWT 토큰 키 정의
-private val TOKEN_KEY = stringPreferencesKey("jwt_token")
+private val KEY_ACCESS = stringPreferencesKey("access_token")
+private val KEY_REFRESH = stringPreferencesKey("refresh_token")
 
 class TokenManager(private val context: Context) {
 
-    // 토큰 저장
-    suspend fun saveToken(token: String) {
+    suspend fun saveTokens(accessToken: String?, refreshToken: String?) {
         context.dataStore.edit { prefs ->
-            prefs[TOKEN_KEY] = token
+            accessToken?.let { prefs[KEY_ACCESS] = it }
+            refreshToken?.let { prefs[KEY_REFRESH] = it }
         }
     }
 
-    // 토큰 불러오기
-    suspend fun getToken(): String? {
-        return context.dataStore.data
-            .map { prefs -> prefs[TOKEN_KEY] }
-            .first()
-    }
+    suspend fun getAccessToken(): String? =
+        context.dataStore.data.map { it[KEY_ACCESS] }.first()
 
-    // 토큰 삭제
-    suspend fun clearToken() {
+    suspend fun getRefreshToken(): String? =
+        context.dataStore.data.map { it[KEY_REFRESH] }.first()
+
+    suspend fun clear() {
         context.dataStore.edit { prefs ->
-            prefs.remove(TOKEN_KEY)
+            prefs.remove(KEY_ACCESS)
+            prefs.remove(KEY_REFRESH)
         }
     }
 }
