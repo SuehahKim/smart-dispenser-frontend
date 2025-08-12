@@ -7,7 +7,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "http://54.180.101.131/" // 기존 그대로
+    private const val BASE_URL = "http://54.180.115.162/" // 기존 그대로
 
     // 🔹 헤더 자동 부착용 초미니 인터셉터
     private val authInterceptor = Interceptor { chain ->

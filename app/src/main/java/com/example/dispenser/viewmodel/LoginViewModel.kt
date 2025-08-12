@@ -15,13 +15,13 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(app: Application) : AndroidViewModel(app) {
 
-    // ✅ Application Context로 TokenManager 직접 생성 (팩토리 불필요)
     private val tokenManager = TokenManager(app.applicationContext)
 
     private val _loginSuccess = mutableStateOf(false)
     val loginSuccess: State<Boolean> = _loginSuccess
     val loginMessage = mutableStateOf<String?>(null)
 
+    // 회원 로그인: 토큰/유저정보 "저장"
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -32,12 +32,10 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                         return@launch
                     }
 
-                    // ✅ 토큰 저장 + 인터셉터용 메모리 탑재
-                    tokenManager.saveTokens(body.accessToken, body.refreshToken)
+                    // ✅ 영구 저장 (자동로그인용)
+                    tokenManager.saveTokens(body.accessToken, body.refreshToken ?: "")
+                    tokenManager.saveUserInfo(body.email, body.id)
                     TokenHolder.accessToken = body.accessToken
-
-                    Log.d("Login", "ACCESS TOKEN = ${body.accessToken}")
-                    Log.d("Login", "REFRESH TOKEN = ${body.refreshToken}")
 
                     _loginSuccess.value = true
                     loginMessage.value = "로그인 성공"
@@ -47,17 +45,16 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                     Log.e("Login", "서버 오류: ${resp.code()} ${resp.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                loginMessage.value = "예외 발생: ${e.message}"
+                loginMessage.value = "통신/예외: ${e.message}"
                 Log.e("Login", "예외 발생", e)
             }
         }
     }
 
+    // 비회원 로그인: 토큰 "저장 안 함" → 세션 동안만 사용
     fun guestLogin(uuid: String) {
         viewModelScope.launch {
             try {
-                Log.d("GuestLogin", "UUID = $uuid")
-
                 val resp = RetrofitClient.authService.guestLogin(GuestLoginRequest(uuid))
                 if (resp.isSuccessful) {
                     val body = resp.body() ?: run {
@@ -65,13 +62,12 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                         return@launch
                     }
 
-                    // ✅ 토큰 저장 + 인터셉터용 메모리 탑재
-                    tokenManager.saveTokens(body.accessToken, body.refreshToken)
+                    // ✅ DataStore에 저장하지 않고 메모리에만 올림
                     TokenHolder.accessToken = body.accessToken
 
                     _loginSuccess.value = true
                     loginMessage.value = "게스트 로그인 성공"
-                    Log.d("GuestLogin", "access=${body.accessToken.take(12)}, refresh=${body.refreshToken?.take(12)}")
+                    Log.d("GuestLogin", "access=${body.accessToken.take(12)}, (not persisted)")
                 } else {
                     loginMessage.value = "게스트 서버 오류: ${resp.code()}"
                     Log.e("GuestLogin", "서버 오류: ${resp.code()} ${resp.errorBody()?.string()}")

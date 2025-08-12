@@ -5,55 +5,77 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import com.example.dispenser.data.local.TokenHolder
 import com.example.dispenser.data.local.TokenManager
 import com.example.dispenser.navigation.NavGraph
+import com.example.dispenser.navigation.Screen
+import com.example.dispenser.ui.screens.StartLoggedInScreen
 import com.example.dispenser.ui.theme.DispenserTheme
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             DispenserTheme {
-                NavGraph()
+                val context = LocalContext.current
+                val tokenManager = remember { TokenManager(context) }
+
+                var userEmail by remember { mutableStateOf<String?>(null) }
+                var userId by remember { mutableStateOf<String?>(null) }
+                var startNavRoute by remember { mutableStateOf<String?>(null) }
+                var showLoggedInStart by remember { mutableStateOf(false) }
+
+                LaunchedEffect(Unit) {
+                    val access = tokenManager.getAccessToken() // ← DataStore에 저장된 것만 검사
+                    userEmail = tokenManager.getUserEmail()
+                    userId = tokenManager.getUserId()
+
+                    TokenHolder.accessToken = access
+
+                    val isLoggedIn = isValidJwt(access)
+                    Log.d("MainActivity", "storedAccess?=${!access.isNullOrBlank()} isLoggedIn=$isLoggedIn")
+
+                    if (isLoggedIn) {
+                        showLoggedInStart = true
+                        startNavRoute = Screen.MemberHome.route
+                    } else {
+                        showLoggedInStart = false
+                        startNavRoute = Screen.Welcome.route
+                    }
+                }
+
+                if (showLoggedInStart) {
+                    StartLoggedInScreen(
+                        userEmail = userEmail,
+                        userId = userId,
+                        onMakeSauce = {
+                            showLoggedInStart = false
+                            startNavRoute = Screen.MemberHome.route
+                        },
+                        onLogout = {
+                            tokenManager.clear()
+                            TokenHolder.accessToken = null
+                            showLoggedInStart = false
+                            startNavRoute = Screen.Welcome.route
+                        }
+                    )
+                } else {
+                    if (startNavRoute != null) {
+                        NavGraph(startDestination = startNavRoute!!)
+                    }
+                }
             }
         }
-
-        // ✅ 앱 시작 시 저장된 토큰 확인 + TokenHolder에 올리기
-        val tokenManager = TokenManager(applicationContext)
-        lifecycleScope.launch {
-            val savedAccess = tokenManager.getAccessToken()
-            val savedRefresh = tokenManager.getRefreshToken()
-
-            // 인터셉터에서 바로 쓰도록 메모리에 탑재
-            TokenHolder.accessToken = savedAccess
-
-            // Logcat으로 확인 (Tag: TokenCheck)
-            Log.d("TokenCheck", "Saved Access Token = ${savedAccess?.take(16)}")
-            Log.d("TokenCheck", "Saved Refresh Token = ${savedRefresh?.take(16)}")
-        }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DispenserTheme {
-        Greeting("Android")
+    private fun isValidJwt(token: String?): Boolean {
+        if (token.isNullOrBlank()) return false
+        val dotCount = token.count { it == '.' }
+        return dotCount >= 2 && token.length >= 40
     }
 }

@@ -34,7 +34,7 @@ fun WelcomeScreen(
     ) {
         // 제목 글자 크기를 36sp로 키우고, 볼드 처리
         Text(
-            text = "양념 디스펜서 앱",
+            text = "스마트 디스펜서",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
