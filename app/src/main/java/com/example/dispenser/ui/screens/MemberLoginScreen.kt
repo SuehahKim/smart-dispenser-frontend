@@ -20,6 +20,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+import com.example.dispenser.viewmodel.LoginViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
+import com.example.dispenser.data.local.TokenManager
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+
+
+
 /**
  * 회원 로그인 화면
  *
@@ -33,6 +44,26 @@ fun MemberLoginScreen(
     onBack: () -> Unit,
     onHome: () -> Unit
 ) {
+    val context = LocalContext.current
+    val tokenManager: TokenManager = remember { TokenManager(context) }
+    val viewModel: LoginViewModel = viewModel()
+
+    val loginSuccess = viewModel.loginSuccess.value
+    val message = viewModel.loginMessage.value
+
+    if (message != null) {
+        LaunchedEffect(message) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.loginMessage.value = null // 메시지 초기화
+        }
+    }
+
+    if (loginSuccess) {
+        // 로그인 성공하면 홈 화면으로 이동
+        onLoginSuccess()
+        viewModel.resetLoginSuccess() // 상태 초기화
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -84,7 +115,7 @@ fun MemberLoginScreen(
                     )
 
                     Button(
-                        onClick = onLoginSuccess,
+                        onClick = {viewModel.login(email, password)},
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(70.dp)
