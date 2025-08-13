@@ -5,11 +5,12 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http://54.180.101.131/" // 기존 그대로
+    private const val BASE_URL = "http://43.201.101.39/"
 
-    // 🔹 헤더 자동 부착용 초미니 인터셉터
+    // JWT 헤더 자동 부착
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
         val access = TokenHolder.accessToken
@@ -17,19 +18,25 @@ object RetrofitClient {
             original.newBuilder()
                 .addHeader("Authorization", "Bearer $access")
                 .build()
-        } else original
+        } else {
+            original
+        }
         chain.proceed(req)
     }
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
         .build()
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
-        .client(client) // 🔸 여기만 추가
+        .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
     val authService: AuthService = retrofit.create(AuthService::class.java)
+    val historyService: HistoryService = retrofit.create(HistoryService::class.java)
 }

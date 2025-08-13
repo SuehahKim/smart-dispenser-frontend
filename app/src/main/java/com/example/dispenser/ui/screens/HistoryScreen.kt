@@ -4,7 +4,15 @@ package com.example.dispenser.ui.screens
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,47 +21,51 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.dispenser.navigation.Screen   // ✅ 네비게이션 Screen import
-import com.example.dispenser.ui.popups.RecipeConfirmDialog  // ✅ 팝업 import
-
-// 기록 모델
-data class HistoryItem(val id: Int, val name: String, val timestamp: String)
+import com.example.dispenser.data.model.HistoryDto
+import com.example.dispenser.navigation.Screen
+import com.example.dispenser.ui.popups.RecipeConfirmDialog
+import com.example.dispenser.viewmodel.HistoryViewModel
 
 @Composable
 fun HistoryScreen(
     navController: NavController,
     onBack: () -> Unit,
-    onHome: () -> Unit
+    onHome: () -> Unit,
+    viewModel: HistoryViewModel = viewModel()
 ) {
-    // ✅ 팝업 상태
+    // 팝업 상태
     var showRecipeDialog by remember { mutableStateOf(false) }
 
-    // ✅ 더미 이력 데이터
-    val history = remember {
-        listOf(
-            HistoryItem(1, "떡볶이소스", "2025-07-17 11:23 사용"),
-            HistoryItem(2, "비빔국수소스", "2025-07-17 10:45 사용"),
-            HistoryItem(3, "제육볶음소스", "2025-07-16 18:10 사용"),
-            HistoryItem(4, "스위트칠리소스", "2025-07-15 14:05 사용"),
-            HistoryItem(5, "스파이시간장", "2025-07-14 09:30 사용"),
-            HistoryItem(6, "갈릭버터소스", "2025-07-13 20:20 사용"),
-            HistoryItem(7, "머스터드소스", "2025-07-12 12:00 사용"),
-            HistoryItem(8, "발사믹비네그레트", "2025-07-11 16:45 사용"),
-            HistoryItem(9, "토마토베이스", "2025-07-10 08:15 사용"),
-            HistoryItem(10, "BBQ소스", "2025-07-09 19:55 사용")
-        )
-    }
+    // UI 상태 구독
+    val ui by viewModel.ui.collectAsState()
 
-    val favoriteHistoryIds = setOf(1, 3, 5)
+    // 최초 로딩
+    LaunchedEffect(Unit) { viewModel.loadAll() }
 
     Scaffold(
         topBar = {
@@ -70,63 +82,124 @@ fun HistoryScreen(
                     }
                 }
             )
-        },
-        content = { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 32.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(history) { item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    width = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .clickable {
-                                    // ✅ 떡볶이소스 클릭 시 팝업 표시
-                                    if (item.name == "떡볶이소스") {
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when {
+                ui.loading && ui.items.isEmpty() -> {
+                    // 첫 로딩 스피너
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                !ui.loading && ui.items.isEmpty() -> {
+                    // 데이터 없음
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(ui.error ?: "기록이 없어요.")
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 32.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(ui.items) { item: HistoryDto ->
+                            val ingredientsText =
+                                item.ingredientsNames.joinToString(" · ") { it.name }
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        width = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .clickable {
+                                        // 항목 클릭 시 팝업
                                         showRecipeDialog = true
-                                    }
-                                },
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(6.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(20.dp)
+                                    },
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(6.dp)
                             ) {
-                                val iconImage =
-                                    if (item.id in favoriteHistoryIds) Icons.Filled.Star else Icons.Filled.StarBorder
-                                Icon(
-                                    imageVector = iconImage,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = item.name,
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.SemiBold
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(20.dp)
+                                ) {
+                                    val iconImage =
+                                        if (item.favorite) Icons.Filled.Star else Icons.Filled.StarBorder
+                                    Icon(
+                                        imageVector = iconImage,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .padding(top = 2.dp)
+                                            .height(32.dp)
                                     )
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(
-                                        text = item.timestamp,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.Gray,
-                                        textAlign = TextAlign.Start
-                                    )
+                                    Spacer(Modifier.padding(8.dp))
+                                    Column {
+                                        Text(
+                                            text = item.recipeName.ifBlank { "레시피 #${item.recipeId}" },
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(
+                                            text = buildString {
+                                                append("상태: ${item.status}  |  요청: ${item.requestedAt}")
+                                                item.completedAt?.let { append("  |  완료: $it") }
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = Color.Gray,
+                                            textAlign = TextAlign.Start
+                                        )
+                                        if (ingredientsText.isNotBlank()) {
+                                            Spacer(Modifier.height(6.dp))
+                                            Text(
+                                                text = "재료: $ingredientsText",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // 페이징 footer
+                        if (!ui.endReached) {
+                            item {
+                                LaunchedEffect(ui.page) {
+                                    if (!ui.loading) viewModel.loadAll(next = true)
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    if (ui.loading) {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.5f)
+                                                .height(6.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -134,19 +207,31 @@ fun HistoryScreen(
                 }
             }
 
-            // ✅ 레시피 확인 팝업 → 예 버튼 시 제조중 화면으로 이동
-            RecipeConfirmDialog(
-                showDialog = showRecipeDialog,
-                onConfirm = {
-                    showRecipeDialog = false
-                    navController.navigate(Screen.Manufacturing.route) {  // ✅ 제조중 화면 이동
-                        popUpTo(Screen.MemberHome.route) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                },
-                onDismissAndBack = { showRecipeDialog = false },
-                onRetry = { /* 다시듣기 로직 필요 시 구현 */ }
-            )
+            // 에러 메시지(있으면 하단에 추가 노출)
+            ui.error?.let {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-    )
+
+        // 레시피 확인 팝업 → 예 버튼 시 제조중 화면으로 이동
+        RecipeConfirmDialog(
+            showDialog = showRecipeDialog,
+            onConfirm = {
+                showRecipeDialog = false
+                navController.navigate(Screen.Manufacturing.route) {
+                    popUpTo(Screen.MemberHome.route) { inclusive = false }
+                    launchSingleTop = true
+                }
+            },
+            onDismissAndBack = { showRecipeDialog = false },
+            onRetry = { /* 필요 시 다시듣기 구현 */ }
+        )
+    }
 }
