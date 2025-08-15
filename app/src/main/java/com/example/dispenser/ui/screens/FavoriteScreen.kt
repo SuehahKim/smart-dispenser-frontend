@@ -22,10 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import com.example.dispenser.ui.popups.StockAlertDialog
-import com.example.dispenser.ui.popups.RecipeConfirmDialog
 import com.example.dispenser.navigation.Screen
-
-
+import com.example.dispenser.ui.popups.RecipeConfirmDialog
 
 
 data class FavoriteItem(val id: Int, val name: String, val description: String)

@@ -9,14 +9,14 @@ import retrofit2.Response
 
 interface HistoryService {
 
-    // 전체 과거 이력 조회  GET /api/histories?page=0&size=20
-    @GET("/api/histories")
+    // 전체 과거 이력 조회  GET  /api/histories/me?page=0&size=20
+    @GET("/api/histories/me")
     suspend fun getAllHistories(
         @Query("page") page: Int,
         @Query("size") size: Int
     ): PageResponse<HistoryDto>
 
-    // 특정 디스펜서 과거 이력 조회  GET /api/histories/{dispenserId}?page=0&size=20
+    // 특정 디스펜서 과거 이력  GET  /api/histories/{dispenserId}?page=0&size=20
     @GET("/api/histories/{dispenserId}")
     suspend fun getHistoriesByDispenser(
         @Path("dispenserId") dispenserId: Long,

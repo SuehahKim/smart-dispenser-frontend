@@ -14,7 +14,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,6 +36,7 @@ android {
     buildFeatures {
         compose = true
     }
+    
 }
 
 dependencies {
@@ -55,13 +55,13 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
 
-    // CameraX (카메라 프리뷰용)
+    // CameraX
     implementation("androidx.camera:camera-core:1.2.3")
     implementation("androidx.camera:camera-camera2:1.2.3")
     implementation("androidx.camera:camera-lifecycle:1.2.3")
     implementation("androidx.camera:camera-view:1.2.3")
 
-    // ZXing Android Embedded (QR 디코딩용)
+    // ZXing
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.zxing:core:3.5.0")
 
@@ -78,23 +78,16 @@ dependencies {
 
     implementation ("androidx.appcompat:appcompat:1.6.1")
 
-    // 📌 dependencies 블록 안에 추가
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-
-    // 코루틴 + 뷰모델 사용 중이면:
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.json:json:20231013") // JSONObject 쓰려면 필요
-
-    // DataStore Preferences
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // Retrofit/OkHttp (버전 통일)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
 
+    // ViewModel / Coroutines / DataStore
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // (선택) JSONObject
+    implementation("org.json:json:20231013")
 }

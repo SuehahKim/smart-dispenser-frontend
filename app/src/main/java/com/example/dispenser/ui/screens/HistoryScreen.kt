@@ -28,9 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,9 +47,45 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.dispenser.data.model.HistoryDto
-import com.example.dispenser.navigation.Screen
+import com.example.dispenser.ui.components.StatusBadge
 import com.example.dispenser.ui.popups.RecipeConfirmDialog
 import com.example.dispenser.viewmodel.HistoryViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
+import com.example.dispenser.navigation.Screen
+
+
+/* ---------- API 24 호환용 날짜 포맷터 ---------- */
+/** ISO-8601(마이크로초 포함 가능) 문자열을 yyyy-MM-dd HH:mm 형태로 변환 */
+private fun formatDateTime(isoString: String?): String {
+    if (isoString.isNullOrBlank()) return "-"
+    return try {
+        val normalized = normalizeIsoToMillis(isoString)
+        val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault())
+        val date = inFmt.parse(normalized) ?: return isoString
+        val outFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        outFmt.format(date)
+    } catch (_: Exception) {
+        isoString // 실패 시 원본 노출
+    }
+}
+
+/** 2025-08-15T09:34:44.272807(+offset 가능) -> 2025-08-15T09:34:44.272 로 보정 */
+private fun normalizeIsoToMillis(src: String): String {
+    val datePart = src.substringBefore('T', src)
+    val afterT = src.substringAfter('T', "")
+    // 시간부에서 숫자/콜론/점만 취득하여 타임존/오프셋(Z, +09:00 등) 제거
+    val timeCore = afterT.takeWhile { it.isDigit() || it == ':' || it == '.' }
+    val secPart = timeCore.substringBefore('.', timeCore) // HH:mm:ss
+    val frac = timeCore.substringAfter('.', "")            // 소수부(없으면 "")
+    val millis = when {
+        frac.isEmpty() -> "000"
+        frac.length >= 3 -> frac.substring(0, 3)
+        else -> (frac + "000").substring(0, 3)
+    }
+    return "${datePart}T${secPart}.${millis}"
+}
+/* -------------------------------------------- */
 
 @Composable
 fun HistoryScreen(
@@ -58,13 +94,9 @@ fun HistoryScreen(
     onHome: () -> Unit,
     viewModel: HistoryViewModel = viewModel()
 ) {
-    // 팝업 상태
     var showRecipeDialog by remember { mutableStateOf(false) }
-
-    // UI 상태 구독
     val ui by viewModel.ui.collectAsState()
 
-    // 최초 로딩
     LaunchedEffect(Unit) { viewModel.loadAll() }
 
     Scaffold(
@@ -91,21 +123,13 @@ fun HistoryScreen(
         ) {
             when {
                 ui.loading && ui.items.isEmpty() -> {
-                    // 첫 로딩 스피너
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
 
                 !ui.loading && ui.items.isEmpty() -> {
-                    // 데이터 없음
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(ui.error ?: "기록이 없어요.")
                     }
                 }
@@ -129,10 +153,7 @@ fun HistoryScreen(
                                         color = MaterialTheme.colorScheme.primary,
                                         shape = RoundedCornerShape(12.dp)
                                     )
-                                    .clickable {
-                                        // 항목 클릭 시 팝업
-                                        showRecipeDialog = true
-                                    },
+                                    .clickable { showRecipeDialog = true },
                                 shape = RoundedCornerShape(12.dp),
                                 elevation = CardDefaults.cardElevation(6.dp)
                             ) {
@@ -150,23 +171,33 @@ fun HistoryScreen(
                                             .padding(top = 2.dp)
                                             .height(32.dp)
                                     )
+
                                     Spacer(Modifier.padding(8.dp))
-                                    Column {
-                                        Text(
-                                            text = item.recipeName.ifBlank { "레시피 #${item.recipeId}" },
-                                            style = MaterialTheme.typography.headlineSmall,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = item.recipeName.ifBlank { "레시피 #${item.recipeId}" },
+                                                style = MaterialTheme.typography.headlineSmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            StatusBadge(status = item.status)
+                                        }
+
                                         Spacer(Modifier.height(6.dp))
+
+                                        // 상태 텍스트는 제거하고 "요청"과 "재료"만 노출
                                         Text(
-                                            text = buildString {
-                                                append("상태: ${item.status}  |  요청: ${item.requestedAt}")
-                                                item.completedAt?.let { append("  |  완료: $it") }
-                                            },
+                                            text = "요청: ${formatDateTime(item.requestedAt)}",
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = Color.Gray,
                                             textAlign = TextAlign.Start
                                         )
+
                                         if (ingredientsText.isNotBlank()) {
                                             Spacer(Modifier.height(6.dp))
                                             Text(
@@ -180,7 +211,6 @@ fun HistoryScreen(
                             }
                         }
 
-                        // 페이징 footer
                         if (!ui.endReached) {
                             item {
                                 LaunchedEffect(ui.page) {
@@ -207,7 +237,6 @@ fun HistoryScreen(
                 }
             }
 
-            // 에러 메시지(있으면 하단에 추가 노출)
             ui.error?.let {
                 Text(
                     text = it,
@@ -220,7 +249,6 @@ fun HistoryScreen(
             }
         }
 
-        // 레시피 확인 팝업 → 예 버튼 시 제조중 화면으로 이동
         RecipeConfirmDialog(
             showDialog = showRecipeDialog,
             onConfirm = {
@@ -231,7 +259,7 @@ fun HistoryScreen(
                 }
             },
             onDismissAndBack = { showRecipeDialog = false },
-            onRetry = { /* 필요 시 다시듣기 구현 */ }
+            onRetry = { /* 필요 시 재시도 로직 */ }
         )
     }
 }
