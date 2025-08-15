@@ -24,12 +24,6 @@ interface AuthService {
     suspend fun guestLogin(@Body request: GuestLoginRequest): Response<LoginResponse>
 }
 
-// 같은 파일에 모델 정의(파일 추가 없이 사용)
-data class RefreshRequest(val refreshToken: String)
-data class RefreshResponse(
-    val accessToken: String,
-    val refreshToken: String? = null
-)
 
 //게스트
 data class GuestLoginRequest(val uuid: String)

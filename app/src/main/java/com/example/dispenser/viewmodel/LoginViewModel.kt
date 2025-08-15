@@ -39,7 +39,10 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
 
                     _loginSuccess.value = true
                     loginMessage.value = "로그인 성공"
-                    Log.d("Login", "access=${body.accessToken.take(12)}..., refresh=${body.refreshToken?.take(12)}...")
+                    Log.d(
+                        "Login",
+                        "access=${body.accessToken.take(12)}..., refresh=${body.refreshToken?.take(12) ?: ""}..."
+                    )
                 } else {
                     loginMessage.value = "서버 오류: ${resp.code()}"
                     Log.e("Login", "서버 오류: ${resp.code()} ${resp.errorBody()?.string()}")

@@ -13,11 +13,16 @@ import com.example.dispenser.navigation.NavGraph
 import com.example.dispenser.navigation.Screen
 import com.example.dispenser.ui.screens.StartLoggedInScreen
 import com.example.dispenser.ui.theme.DispenserTheme
+import com.example.dispenser.data.api.RetrofitClient
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 🔹 Retrofit 초기화 (반드시 1회)
+        RetrofitClient.init(applicationContext)
+
         enableEdgeToEdge()
 
         setContent {

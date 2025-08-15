@@ -1,35 +1,93 @@
 package com.example.dispenser.data.api
 
+import android.content.Context
 import com.example.dispenser.data.local.TokenHolder
+import com.example.dispenser.data.local.TokenManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http://54.180.115.162/" // 기존 그대로
+    // ★ 서버 주소 확인 (슬래시 유지)
+    private const val BASE_URL = "http://13.124.43.117/"
 
-    // 🔹 헤더 자동 부착용 초미니 인터셉터
-    private val authInterceptor = Interceptor { chain ->
-        val original = chain.request()
-        val access = TokenHolder.accessToken
-        val req = if (!access.isNullOrBlank()) {
-            original.newBuilder()
-                .addHeader("Authorization", "Bearer $access")
-                .build()
-        } else original
-        chain.proceed(req)
+    @Volatile private var retrofit: Retrofit? = null
+    private lateinit var tokenManager: TokenManager
+
+    /**
+     * 앱 시작 시 한 번만 호출하세요.
+     * 예) Application.onCreate() 또는 MainActivity.onCreate()
+     */
+    fun init(context: Context) {
+        if (!::tokenManager.isInitialized) {
+            tokenManager = TokenManager(context.applicationContext)
+        }
+        if (retrofit == null) {
+            retrofit = buildRetrofit()
+        }
     }
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(authInterceptor)
-        .build()
+    /** 내부에서만 사용 */
+    private fun buildRetrofit(): Retrofit {
+        // 1) 로깅
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(client) // 🔸 여기만 추가
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+        // 2) Authorization 헤더 자동 첨부
+        val authInterceptor = Interceptor { chain ->
+            val original = chain.request()
+            val access = TokenHolder.accessToken ?: tokenManager.getAccessToken()
+            val req = if (!access.isNullOrBlank()) {
+                original.newBuilder()
+                    .addHeader("Authorization", "Bearer $access")
+                    .build()
+            } else original
+            chain.proceed(req)
+        }
 
-    val authService: AuthService = retrofit.create(AuthService::class.java)
+        // 3) refresh 전용 Retrofit (인증/인증기 없음 — 무한루프 방지)
+        val refreshRetrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(
+                OkHttpClient.Builder()
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .addInterceptor(logging)
+                    .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val refreshApi = refreshRetrofit.create(AuthRefreshApi::class.java)
+
+        // 4) 메인 OkHttp: 인터셉터 + Authenticator 장착
+        val client = OkHttpClient.Builder()
+            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(logging)
+            .addInterceptor(authInterceptor)
+            .authenticator(TokenAuthenticator(tokenManager, refreshApi)) // ← 401 자동 갱신
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    /** 필요 시 서비스 꺼내서 사용 */
+    private fun retrofit(): Retrofit {
+        checkNotNull(retrofit) { "RetrofitClient.init(context)를 먼저 호출하세요." }
+        return retrofit!!
+    }
+
+    // 네가 쓰던 방식 유지
+    val authService: AuthService by lazy { retrofit().create(AuthService::class.java) }
+
+    // 다른 API도 이렇게:
+    // val memberApi: MemberApi by lazy { retrofit().create(MemberApi::class.java) }
 }

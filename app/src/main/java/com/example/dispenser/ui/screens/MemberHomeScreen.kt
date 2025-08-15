@@ -13,6 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+//401테스트
+import android.util.Log
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+import com.example.dispenser.data.local.TokenManager
+import com.example.dispenser.data.api.RetrofitClient
+
+
 /**
  * 회원 전용 홈 화면
  *
@@ -167,6 +176,40 @@ fun MemberHomeScreen(
                 ) {
                     Text("잔량확인")
                 }
+
+
+                /*
+                //401테스트
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+
+                Button(
+
+                    onClick = {
+                        val tm = TokenManager(context.applicationContext)
+
+                        // Refresh Token은 유지하고 Access Token만 깨뜨림
+                        val refresh = tm.getRefreshToken() ?: ""
+                        tm.saveTokens("invalid.access.token", refresh)
+
+                        // 보호 API 호출 (네 AuthService의 "인증 필요한" 메서드로 바꿔줘)
+                        scope.launch {
+                            try {
+                                // ⬇⬇⬇ 여기 한 줄만 너의 실제 보호 API로 교체
+                                // 예시: val resp = RetrofitClient.authService.getMyProfile()
+                                val resp = RetrofitClient.authService.getMyProfile() // TODO: 네 메서드명으로 교체
+
+                                Log.d("TEST", "호출 결과 코드: ${resp.code()}")
+                            } catch (e: Exception) {
+                                Log.e("TEST", "호출 예외", e)
+                            }
+                        }
+                    }
+                ) {
+                    Text("401 테스트")
+                }
+
+                 */
             }
         }
     )

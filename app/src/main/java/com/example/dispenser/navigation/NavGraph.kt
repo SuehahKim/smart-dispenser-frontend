@@ -92,8 +92,18 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         // 4) 회원 홈
         composable(Screen.MemberHome.route) {
             MemberHomeScreen(
-                onBack = { navController.popBackStack() },
-                onHome = { navController.popBackStack(Screen.Welcome.route, false) },
+                onBack = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                },
+                onHome = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                },
                 onFavorites = { navController.navigate(Screen.Favorite.route) },
                 onHistory    = { navController.navigate(Screen.History.route) },
                 onStockCheck = { navController.navigate(Screen.StockCheck.route) },
@@ -104,11 +114,17 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
         // 5) 게스트 홈
         composable(Screen.GuestHome.route) {
             GuestHomeScreen(
-                onLogout = { navController.popBackStack(Screen.Welcome.route, false) },
+                onLogout = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0)              // ← 전체 스택 제거
+                        launchSingleTop = true
+                    }
+                },
                 onStockCheck = { navController.navigate(Screen.StockCheck.route) },
                 onConnectDevice = { navController.navigate(Screen.DeviceConnect.route) }
             )
         }
+
 
         // 6) QR
         composable(Screen.DeviceConnect.route) {
