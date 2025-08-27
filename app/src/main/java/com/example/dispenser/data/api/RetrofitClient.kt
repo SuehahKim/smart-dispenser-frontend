@@ -5,18 +5,33 @@ import com.example.dispenser.data.local.TokenHolder
 import com.example.dispenser.data.local.TokenManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
+    private const val BASE_URL = "http://13.124.43.117/"
     // ★ 서버 주소 확인 (슬래시 유지)
     private const val BASE_URL = "http://13.124.43.117/"
 
     @Volatile private var retrofit: Retrofit? = null
     private lateinit var tokenManager: TokenManager
 
+    // JWT 헤더 자동 부착
+    private val authInterceptor = Interceptor { chain ->
+        val original = chain.request()
+        val access = TokenHolder.accessToken
+        val req = if (!access.isNullOrBlank()) {
+            original.newBuilder()
+                .addHeader("Authorization", "Bearer $access")
+                .build()
+        } else {
+            original
+        }
+        chain.proceed(req)
+    }
     /**
      * 앱 시작 시 한 번만 호출하세요.
      * 예) Application.onCreate() 또는 MainActivity.onCreate()
@@ -49,6 +64,12 @@ object RetrofitClient {
             chain.proceed(req)
         }
 
+    private val client = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .build()
         // 3) refresh 전용 Retrofit (인증/인증기 없음 — 무한루프 방지)
         val refreshRetrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -72,6 +93,11 @@ object RetrofitClient {
             .authenticator(TokenAuthenticator(tokenManager, refreshApi)) // ← 401 자동 갱신
             .build()
 
+    private val retrofit = retrofit2.Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(client)
+        .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
+        .build()
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
@@ -85,6 +111,8 @@ object RetrofitClient {
         return retrofit!!
     }
 
+    val authService: AuthService = retrofit.create(AuthService::class.java)
+    val historyService: HistoryService = retrofit.create(HistoryService::class.java)
     // 네가 쓰던 방식 유지
     val authService: AuthService by lazy { retrofit().create(AuthService::class.java) }
 

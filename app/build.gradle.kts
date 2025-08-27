@@ -92,4 +92,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // (선택) JSONObject
+    implementation("org.json:json:20231013")
 }

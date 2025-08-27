@@ -11,6 +11,7 @@ import com.example.dispenser.ui.screens.*
 import com.example.dispenser.data.local.InstallIdManager
 import com.example.dispenser.viewmodel.LoginViewModel
 
+// ✅ 기존처럼 이 파일에 Screen을 둔다 (인자 없는 제조 라우트)
 sealed class Screen(val route: String) {
     object Welcome     : Screen("welcome")
     object MemberLogin : Screen("member_login")
@@ -22,6 +23,7 @@ sealed class Screen(val route: String) {
     object StockCheck  : Screen("stock_check")
     object Manufacturing : Screen("manufacturing")
     object DeviceConnect : Screen("device_connect")
+    object Manufacturing : Screen("manufacturing")                 // ⬅️ 인자 없음
     object ManufacturingComplete : Screen("manufacturing_complete")
 }
 
@@ -125,11 +127,10 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-
         // 6) QR
         composable(Screen.DeviceConnect.route) {
             QRScanScreen(
-                onScanSuccess = { navController.navigate(Screen.Manufacturing.route) },
+                onScanSuccess = { navController.navigate(Screen.Manufacturing.route) }, // ⬅️ 인자 없이 이동
                 onBack = { navController.popBackStack() }
             )
         }
@@ -143,7 +144,7 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-        // 8) 이력
+        // 8) 사용 이력
         composable(Screen.History.route) {
             HistoryScreen(
                 navController = navController,
@@ -160,12 +161,13 @@ fun NavGraph(startDestination: String = Screen.Welcome.route) {
             )
         }
 
-        // 10) 제조중
+        // 10) 제조중 — ⬅️ arguments 제거
         composable(Screen.Manufacturing.route) {
             ManufacturingScreen(
                 navController = navController,
                 onBack = { navController.popBackStack() },
-                onHome = { navController.popBackStack(Screen.Welcome.route, false) }
+                onHome = { navController.navigate(Screen.MemberHome.route) { launchSingleTop = true } }
+                // manufactureId는 기본값(null) → 4초 로컬 타이머 동작
             )
         }
 
